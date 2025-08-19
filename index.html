@@ -5,19 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>La Course des Petits Princes</title>
   <link rel="icon" href="icone.png" type="image/png">
-  <link rel="stylesheet" href="boutonmagic.css">
-  <link rel="stylesheet" href="jumpBtn.css">
   <style>
     body {
       margin: 0;
       padding: 0;
       overflow: hidden;
       font-family: sans-serif;
-      background: url('fond.jpg') no-repeat center center/cover;
+      background: linear-gradient(45deg, #87CEEB, #98FB98, #F0E68C);
+      background-size: 400% 400%;
+      animation: gradientShift 8s ease infinite;
     }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     canvas {
       display: block;
     }
+
     .overlay, #loginZone {
       position: absolute;
       top: 0;
@@ -33,94 +41,211 @@
       text-align: center;
       z-index: 2;
     }
-    #startScreen, #endScreen, #hitMessage, #gameZone {
+
+    #startScreen, #endScreen, #hitMessage, #gameZone, #pauseScreen {
       display: none;
     }
+
     .level-up-message {
       font-size: 28px;
       color: yellow;
       font-weight: bold;
       margin-top: 20px;
     }
+
     #hitMessage {
       background: rgba(255, 0, 0, 0.7);
     }
+
+    #pauseScreen {
+      background: rgba(0, 0, 100, 0.8);
+    }
+
     #loginZone {
       background: rgba(255, 255, 255, 0.9);
       color: black;
     }
+
     #loginZone input {
       display: block;
       margin: 10px auto;
       padding: 10px;
       width: 90%;
+      max-width: 300px;
       border-radius: 8px;
       border: 1px solid #ccc;
     }
+
     #msg {
       color: red;
       margin-top: 10px;
     }
+
+    .button {
+      background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      margin: 10px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
     #mobileControls {
       position: absolute;
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 3;
+      display: flex;
+      gap: 15px;
     }
-    #jumpBtn {
-      font-size: 24px;
-      padding: 15px 30px;
+
+    #jumpBtn, #pauseBtn {
+      font-size: 18px;
+      padding: 15px 25px;
       border: none;
       border-radius: 20px;
-      background-color: #ffc107;
+      background: linear-gradient(45deg, #ffc107, #ff9800);
       color: white;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    #jumpBtn:active, #pauseBtn:active {
+      transform: scale(0.95);
+    }
+
+    .stats-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 14px;
+      z-index: 1;
+    }
+
+    .bonus-indicator {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      z-index: 1;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+
+    .bounce {
+      animation: bounce 1s ease infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    .pulse {
+      animation: pulse 0.5s ease;
     }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
+  
+  <div class="stats-panel">
+    <div>💰 Dons: <span id="scoreDisplay">0</span> €</div>
+    <div>🏃 Niveau: <span id="levelDisplay">1</span></div>
+    <div>⚡ Vitesse: <span id="speedDisplay">1.0</span>x</div>
+    <div>💖 Vies: <span id="livesDisplay">3</span></div>
+  </div>
+
+  <div class="bonus-indicator" id="bonusIndicator" style="display: none;">
+    <div id="bonusText">Bonus Actif!</div>
+    <div id="bonusTimer">10s</div>
+  </div>
+
   <div id="loginZone">
-    <h2>Connexion au jeu 🌟
-      <br>Ces information nous serve a dévlopé un classement des joueur. Merci 🤗
-    </h2>
+    <h2>🌟 Connexion au jeu 🌟</h2>
+    <p>Ces informations nous servent à développer un classement des joueurs. Merci ! 🤗</p>
     <input type="text" id="username" placeholder="Nom d'utilisateur">
     <input type="password" id="password" placeholder="Mot de passe">
-    <button onclick="login()" class="button marge">Se connecter</button>
-    <button onclick="register()" class="button marge">Créer un compte</button>
+    <button onclick="login()" class="button">Se connecter</button>
+    <button onclick="register()" class="button">Créer un compte</button>
     <p id="msg"></p>
   </div>
 
   <div id="startScreen" class="overlay">
-    <h1>Bienvenue dans La Course des Petits Princes 🏃‍♂️</h1>
+    <h1>🌟 Bienvenue dans La Course des Petits Princes 🏃‍♂️</h1>
     <p>Aide <span id="playerName"></span> à réaliser son rêve en récoltant des pièces et des billets !</p>
-    <img src="icone.png" alt="Logo" style="max-width: 300px; margin-top: 20px; border-radius: 20px;">
-    <button onclick="startGame()" class="button">Commencer</button>
-    <br><a href="cd.html" class="button marge">Condition d'utilsation</a>
+    <div style="font-size: 80px; margin: 20px 0;">👑</div>
+    <h3>🎮 Nouveautés :</h3>
+    <ul style="text-align: left; max-width: 400px;">
+      <li>🌟 Bonus spéciaux (vitesse, aimant, bouclier)</li>
+      <li>💖 Système de vies</li>
+      <li>⏸️ Pause disponible</li>
+      <li>🎯 Effets visuels améliorés</li>
+      <li>📊 Statistiques détaillées</li>
+    </ul>
+    <button onclick="startGame()" class="button">Commencer l'aventure</button>
+  </div>
+
+  <div id="pauseScreen" class="overlay">
+    <h2>⏸️ Jeu en Pause</h2>
+    <p>Prends une petite pause, le petit prince t'attend ! 😊</p>
+    <button onclick="resumeGame()" class="button">Reprendre</button>
+    <button onclick="restartGame()" class="button">Recommencer</button>
+    <button onclick="goToMenu()" class="button">Menu principal</button>
   </div>
 
   <div id="endScreen" class="overlay">
-    Bravo ! Grâce à toi, un rêve a été accompli 🌟
-    <img src="fin.png" alt="Victoire" style="max-width: 300px; margin-top: 20px; border-radius: 20px;" />
-    <a href="https://www.petitsprinces.com/" target="_blank" class="button marge">Faire un don maintenant</a>
-    <a href="index.html" class="button marge">Recommence et réaccomplis un rêve</a>
-    <a href="https://github.com/Arthur-VINOT" target="_blank" class="button marge">Mon GitHub</a> 
-    <a href="cd.html" class="button">Conditions d'utilisation</a> 
-    <button onclick="logout()" class="button marge">Déconnexion</button>
+    <h1>🎉 Bravo ! Grâce à toi, un rêve a été accompli ! 🌟</h1>
+    <div style="font-size: 60px; margin: 20px 0;">🏆</div>
+    <div id="finalStats" style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin: 20px;">
+      <h3>📊 Tes statistiques finales :</h3>
+      <p>💰 Total des dons : <span id="finalScore">0</span> €</p>
+      <p>🏃 Niveau atteint : <span id="finalLevel">1</span></p>
+      <p>⭐ Bonus collectés : <span id="finalBonuses">0</span></p>
+    </div>
+    <a href="https://www.petitsprinces.com/" target="_blank" class="button">Faire un don maintenant 💝</a>
+    <button onclick="restartGame()" class="button">Recommencer l'aventure</button>
+    <button onclick="logout()" class="button">Déconnexion</button>
   </div>
 
   <div id="hitMessage" class="overlay">
-    Aïe ! Tu as touché un obstacle ! Fais attention !
+    <h2>💥 Aïe ! Tu as touché un obstacle !</h2>
+    <p>Fais attention ! Il te reste <span id="remainingLives"></span> vie(s)</p>
   </div>
 
   <div id="mobileControls" style="display: none;">
-    <button id="jumpBtn" onclick="sauter()">Sauter</button>
+    <button id="jumpBtn" ontouchstart="sauter()">🦘 Sauter</button>
+    <button id="pauseBtn" onclick="togglePause()">⏸️ Pause</button>
   </div>
-
-  <audio id="bgm" loop>
-    <source src="music.mp3" type="audio/mpeg">
-  </audio>
 
   <script>
     const canvas = document.getElementById('game');
@@ -137,23 +262,31 @@
       e.preventDefault();
     }, { passive: false });
 
+    // Variables globales
+    let player = {}, keys = {}, coins = [], obstacles = [], bonuses = [];
+    let score = 0, level = 1, gameSpeed = 4, lives = 3, totalBonuses = 0;
+    let gravityTimer, lastLevel = 1, levelUpMessage = '', gameRunning = true, gamePaused = false;
+    let activeBonuses = { speed: 0, magnet: 0, shield: 0 };
+    let particles = [];
+
+    // Éléments DOM
     const loginZone = document.getElementById('loginZone');
     const startScreen = document.getElementById('startScreen');
     const endScreen = document.getElementById('endScreen');
+    const pauseScreen = document.getElementById('pauseScreen');
     const hitMessage = document.getElementById('hitMessage');
-    const bgm = document.getElementById('bgm');
     const playerNameDisplay = document.getElementById('playerName');
+    const bonusIndicator = document.getElementById('bonusIndicator');
 
-    let player = {}, keys = {}, coins = [], obstacles = [], score = 0, level = 1, gameSpeed = 4;
-    let gravityTimer, lastLevel = 1, levelUpMessage = '', gameRunning = true;
-
-    const playerImage = new Image();
-    playerImage.src = 'prince.png';
-
+    // Fonctions de gestion des comptes
     function login() {
-      const user = document.getElementById('username').value;
+      const user = document.getElementById('username').value.trim();
       const pass = document.getElementById('password').value;
-      const stored = JSON.parse(localStorage.getItem(user));
+      if (!user || !pass) {
+        document.getElementById('msg').innerText = "⚠️ Veuillez remplir tous les champs !";
+        return;
+      }
+      const stored = JSON.parse(sessionStorage.getItem(user) || 'null');
       if (stored && stored.password === pass) {
         loginZone.style.display = 'none';
         startScreen.style.display = 'flex';
@@ -164,12 +297,16 @@
     }
 
     function register() {
-      const user = document.getElementById('username').value;
+      const user = document.getElementById('username').value.trim();
       const pass = document.getElementById('password').value;
-      if (localStorage.getItem(user)) {
+      if (!user || !pass) {
+        document.getElementById('msg').innerText = "⚠️ Veuillez remplir tous les champs !";
+        return;
+      }
+      if (sessionStorage.getItem(user)) {
         document.getElementById('msg').innerText = "⚠️ Ce nom existe déjà.";
       } else {
-        localStorage.setItem(user, JSON.stringify({ password: pass }));
+        sessionStorage.setItem(user, JSON.stringify({ password: pass }));
         document.getElementById('msg').innerText = "✅ Compte créé ! Tu peux te connecter.";
       }
     }
@@ -178,86 +315,265 @@
       location.reload();
     }
 
+    // Gestion du jeu
     function startGame() {
       startScreen.style.display = 'none';
-      endScreen.style.display = 'none';
-      document.getElementById('mobileControls').style.display = '';
-      bgm.play();
+      pauseScreen.style.display = 'none';
+      document.getElementById('mobileControls').style.display = 'flex';
       initGame();
     }
 
-    function createCoin() {
-      let y = Math.random() * (canvas.height - 200) + 100;
-      let type = Math.random() < 0.7 ? 'coin' : 'bill';
-      let value = type === 'coin' ? 1 : 10;
-      coins.push({ 
-        x: canvas.width, 
-        y: y, 
-        width: type === 'coin' ? 15 : 30, 
-        height: type === 'coin' ? 15 : 20, 
-        type, 
-        value 
-      });
-    }
-
-    function createObstacle() {
-      let height = Math.random() * 50 + 20;
-      obstacles.push({ 
-        x: canvas.width, 
-        y: canvas.height - height, 
-        width: 30, 
-        height 
-      });
-    }
-
-    function drawPlayer() {
-      ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
-    }
-
-    function drawCoins() {
-      for (let coin of coins) {
-        if (coin.type === 'coin') {
-          // Dessiner une pièce (cercle doré)
-          ctx.fillStyle = 'gold';
-          ctx.beginPath();
-          ctx.arc(coin.x, coin.y, coin.width / 2, 0, Math.PI * 2);
-          ctx.fill();
-          
-          // Ajouter un effet brillant
-          ctx.strokeStyle = 'yellow';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+    function togglePause() {
+      if (gameRunning) {
+        gamePaused = !gamePaused;
+        if (gamePaused) {
+          pauseScreen.style.display = 'flex';
         } else {
-          // Dessiner un billet (rectangle vert)
-          ctx.fillStyle = 'green';
-          ctx.fillRect(coin.x - coin.width / 2, coin.y - coin.height / 2, coin.width, coin.height);
-          
-          // Ajouter un détail au billet
-          ctx.strokeStyle = 'darkgreen';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(coin.x - coin.width / 2, coin.y - coin.height / 2, coin.width, coin.height);
+          pauseScreen.style.display = 'none';
         }
       }
     }
 
-    function drawObstacles() {
-      ctx.fillStyle = 'red';
-      for (let obs of obstacles) {
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+    function resumeGame() {
+      gamePaused = false;
+      pauseScreen.style.display = 'none';
+    }
+
+    function restartGame() {
+      pauseScreen.style.display = 'none';
+      endScreen.style.display = 'none';
+      startGame();
+    }
+
+    function goToMenu() {
+      location.reload();
+    }
+
+    // Création des éléments de jeu
+    function createCoin() {
+      let y = Math.random() * (canvas.height - 300) + 100;
+      let type = Math.random() < 0.7 ? 'coin' : 'bill';
+      let value = type === 'coin' ? 1 : 10;
+      coins.push({ 
+        x: canvas.width + 50, 
+        y: y, 
+        width: type === 'coin' ? 20 : 35, 
+        height: type === 'coin' ? 20 : 25, 
+        type, 
+        value,
+        collected: false,
+        sparkles: []
+      });
+    }
+
+    function createObstacle() {
+      let height = Math.random() * 60 + 30;
+      obstacles.push({ 
+        x: canvas.width + 50, 
+        y: canvas.height - height - 50, 
+        width: 35, 
+        height,
+        type: 'spike'
+      });
+    }
+
+    function createBonus() {
+      const bonusTypes = ['speed', 'magnet', 'shield', 'life'];
+      const type = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
+      let y = Math.random() * (canvas.height - 300) + 100;
+      
+      bonuses.push({
+        x: canvas.width + 50,
+        y: y,
+        width: 30,
+        height: 30,
+        type: type,
+        rotation: 0,
+        collected: false
+      });
+    }
+
+    function createParticle(x, y, color) {
+      for (let i = 0; i < 5; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          color: color,
+          life: 30,
+          maxLife: 30,
+          size: Math.random() * 4 + 2
+        });
       }
     }
 
-    function drawScore() {
-      ctx.fillStyle = '#333';
-      ctx.font = '20px Arial';
-      ctx.fillText(`Dons : ${score} €`, 10, 30);
+    // Fonctions de dessin
+    function drawPlayer() {
+      ctx.save();
+      
+      // Effet de bouclier
+      if (activeBonuses.shield > 0) {
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(player.x + player.width/2, player.y + player.height/2, 50, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      
+      // Dessiner le personnage (emoji prince)
+      ctx.font = `${player.height}px Arial`;
+      ctx.fillText('👑', player.x, player.y + player.height);
+      
+      ctx.restore();
+    }
+
+    function drawCoins() {
+      for (let coin of coins) {
+        ctx.save();
+        ctx.translate(coin.x, coin.y);
+        
+        if (coin.type === 'coin') {
+          // Pièce dorée animée
+          ctx.fillStyle = 'gold';
+          ctx.strokeStyle = 'orange';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, coin.width / 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          
+          // Symbole €
+          ctx.fillStyle = 'darkgoldenrod';
+          ctx.font = '12px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('€', 0, 4);
+        } else {
+          // Billet vert
+          ctx.fillStyle = 'green';
+          ctx.strokeStyle = 'darkgreen';
+          ctx.lineWidth = 2;
+          ctx.fillRect(-coin.width/2, -coin.height/2, coin.width, coin.height);
+          ctx.strokeRect(-coin.width/2, -coin.height/2, coin.width, coin.height);
+          
+          // Valeur du billet
+          ctx.fillStyle = 'white';
+          ctx.font = 'bold 10px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('10€', 0, 2);
+        }
+        
+        ctx.restore();
+      }
+    }
+
+    function drawObstacles() {
+      for (let obs of obstacles) {
+        ctx.fillStyle = '#ff4444';
+        ctx.strokeStyle = '#cc0000';
+        ctx.lineWidth = 2;
+        
+        // Dessiner un obstacle épineux
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+        
+        // Ajouter des épines
+        ctx.fillStyle = '#cc0000';
+        for (let i = 0; i < obs.width; i += 8) {
+          ctx.beginPath();
+          ctx.moveTo(obs.x + i, obs.y);
+          ctx.lineTo(obs.x + i + 4, obs.y - 8);
+          ctx.lineTo(obs.x + i + 8, obs.y);
+          ctx.fill();
+        }
+      }
+    }
+
+    function drawBonuses() {
+      for (let bonus of bonuses) {
+        ctx.save();
+        ctx.translate(bonus.x, bonus.y);
+        ctx.rotate(bonus.rotation);
+        
+        // Effet de brillance
+        ctx.shadowColor = 'yellow';
+        ctx.shadowBlur = 10;
+        
+        let emoji = '';
+        let color = '';
+        
+        switch (bonus.type) {
+          case 'speed':
+            emoji = '⚡';
+            color = 'yellow';
+            break;
+          case 'magnet':
+            emoji = '🧲';
+            color = 'red';
+            break;
+          case 'shield':
+            emoji = '🛡️';
+            color = 'blue';
+            break;
+          case 'life':
+            emoji = '💖';
+            color = 'pink';
+            break;
+        }
+        
+        ctx.font = '25px Arial';
+        ctx.fillText(emoji, -12, 8);
+        
+        ctx.restore();
+        bonus.rotation += 0.1;
+      }
+    }
+
+    function drawParticles() {
+      for (let particle of particles) {
+        ctx.save();
+        ctx.globalAlpha = particle.life / particle.maxLife;
+        ctx.fillStyle = particle.color;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function updateUI() {
+      document.getElementById('scoreDisplay').innerText = score;
+      document.getElementById('levelDisplay').innerText = level;
+      document.getElementById('speedDisplay').innerText = (gameSpeed / 4).toFixed(1);
+      document.getElementById('livesDisplay').innerText = lives;
+      
+      // Mettre à jour l'indicateur de bonus
+      const activeBonus = Object.keys(activeBonuses).find(key => activeBonuses[key] > 0);
+      if (activeBonus) {
+        bonusIndicator.style.display = 'block';
+        const bonusNames = {
+          speed: '⚡ Super Vitesse',
+          magnet: '🧲 Aimant',
+          shield: '🛡️ Bouclier'
+        };
+        document.getElementById('bonusText').innerText = bonusNames[activeBonus];
+        document.getElementById('bonusTimer').innerText = Math.ceil(activeBonuses[activeBonus] / 60) + 's';
+      } else {
+        bonusIndicator.style.display = 'none';
+      }
     }
 
     function drawLevelUpMessage() {
       if (levelUpMessage) {
-        ctx.fillStyle = 'yellow';
-        ctx.font = '30px Arial';
-        ctx.fillText(levelUpMessage, canvas.width / 2 - ctx.measureText(levelUpMessage).width / 2, canvas.height / 2);
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.9)';
+        ctx.strokeStyle = 'orange';
+        ctx.lineWidth = 2;
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.strokeText(levelUpMessage, canvas.width / 2, canvas.height / 2);
+        ctx.fillText(levelUpMessage, canvas.width / 2, canvas.height / 2);
+        ctx.restore();
       }
     }
 
@@ -265,54 +581,86 @@
       player = { 
         x: 100, 
         y: canvas.height - 150, 
-        width: 60, 
-        height: 80, 
+        width: 50, 
+        height: 60, 
         dy: 0, 
         gravity: 0.8, 
-        jumpForce: -12, 
+        jumpForce: -15, 
         grounded: false 
       };
       keys = {};
       coins = [];
       obstacles = [];
+      bonuses = [];
+      particles = [];
       score = 0;
       level = 1;
       gameSpeed = 4;
-      maxScore = 1;
+      lives = 3;
+      totalBonuses = 0;
       lastLevel = 1;
       levelUpMessage = "";
       gameRunning = true;
-      gravityTimer = setInterval(() => { gameSpeed += 0.2; }, 3000);
+      gamePaused = false;
+      activeBonuses = { speed: 0, magnet: 0, shield: 0 };
+      
+      clearInterval(gravityTimer);
+      gravityTimer = setInterval(() => { 
+        if (!gamePaused) gameSpeed += 0.15; 
+      }, 4000);
       gameLoop();
     }
 
-    document.getElementById('jumpBtn').addEventListener('touchstart', () => { keys[' '] = true; });
-    document.getElementById('jumpBtn').addEventListener('touchend', () => { keys[' '] = false; });
+    // Contrôles
+    function sauter() {
+      if (player.grounded && gameRunning && !gamePaused) {
+        player.dy = player.jumpForce;
+        player.grounded = false;
+      }
+    }
 
-    window.addEventListener('keydown', (e) => keys[e.key] = true);
+    window.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+      if (e.key === ' ') {
+        e.preventDefault();
+        sauter();
+      }
+      if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+        togglePause();
+      }
+    });
+    
     window.addEventListener('keyup', (e) => keys[e.key] = false);
 
     function gameLoop() {
       if (!gameRunning) return;
-      update();
+      if (!gamePaused) {
+        update();
+      }
       draw();
       requestAnimationFrame(gameLoop);
     }
 
     function update() {
       // Vérifier la condition de victoire
-      if (score >= 69) {
+      if (score >= 100) {
         gameRunning = false;
         clearInterval(gravityTimer);
+        
+        // Mettre à jour les statistiques finales
+        document.getElementById('finalScore').innerText = score;
+        document.getElementById('finalLevel').innerText = level;
+        document.getElementById('finalBonuses').innerText = totalBonuses;
+        
         endScreen.style.display = 'flex';
         return;
       }
 
-      // Mise à jour du joueur (gravité et saut)
+      // Mise à jour du joueur
       player.dy += player.gravity;
       player.y += player.dy;
 
-      if (player.y > canvas.height - 100) {
+      if (player.y >= canvas.height - 100) {
         player.y = canvas.height - 100;
         player.dy = 0;
         player.grounded = true;
@@ -320,102 +668,192 @@
         player.grounded = false;
       }
 
-      if (keys[' '] && player.grounded) {
-        player.dy = player.jumpForce;
+      // Générer des éléments aléatoirement
+      if (Math.random() < 0.025) createCoin();
+      if (Math.random() < 0.008) createObstacle();
+      if (Math.random() < 0.003) createBonus();
+
+      // Mettre à jour les bonus actifs
+      Object.keys(activeBonuses).forEach(key => {
+        if (activeBonuses[key] > 0) {
+          activeBonuses[key]--;
+        }
+      });
+
+      // Calculer la vitesse effective
+      let effectiveSpeed = gameSpeed;
+      if (activeBonuses.speed > 0) {
+        effectiveSpeed *= 0.7; // Ralentir le jeu quand bonus vitesse actif
       }
 
-      // Génération aléatoire de pièces, billets et obstacles
-      if (Math.random() < 0.02) {
-        createCoin();
+      // Effet aimant
+      if (activeBonuses.magnet > 0) {
+        coins.forEach(coin => {
+          let dx = (player.x + player.width/2) - coin.x;
+          let dy = (player.y + player.height/2) - coin.y;
+          let distance = Math.sqrt(dx*dx + dy*dy);
+          
+          if (distance < 100) {
+            coin.x += dx * 0.05;
+            coin.y += dy * 0.05;
+          }
+        });
       }
 
-      if (Math.random() < 0.01) {
-        createObstacle();
-      }
-
-      // Mise à jour des positions des pièces et billets
+      // Mise à jour des pièces
       for (let i = coins.length - 1; i >= 0; i--) {
-        coins[i].x -= gameSpeed;
+        coins[i].x -= effectiveSpeed;
         
-        // Vérifier les collisions avec le joueur
+        // Collision avec le joueur
         if (
-          player.x < coins[i].x + coins[i].width / 2 &&
-          player.x + player.width > coins[i].x - coins[i].width / 2 &&
-          player.y < coins[i].y + coins[i].height / 2 &&
-          player.y + player.height > coins[i].y - coins[i].height / 2
+          player.x < coins[i].x + coins[i].width/2 &&
+          player.x + player.width > coins[i].x - coins[i].width/2 &&
+          player.y < coins[i].y + coins[i].height/2 &&
+          player.y + player.height > coins[i].y - coins[i].height/2
         ) {
-          // Collision détectée, ajouter la valeur au score
           score += coins[i].value;
+          createParticle(coins[i].x, coins[i].y, 'gold');
           coins.splice(i, 1);
           continue;
         }
         
-        // Supprimer les pièces qui sortent de l'écran
-        if (coins[i].x + coins[i].width < 0) {
+        if (coins[i].x < -50) {
           coins.splice(i, 1);
         }
       }
 
-      // Mise à jour des positions des obstacles
+      // Mise à jour des obstacles
       for (let i = obstacles.length - 1; i >= 0; i--) {
-        obstacles[i].x -= gameSpeed;
+        obstacles[i].x -= effectiveSpeed;
         
-        // Vérifier les collisions avec le joueur
+        // Collision avec le joueur (sauf si bouclier actif)
         if (
+          activeBonuses.shield === 0 &&
           player.x < obstacles[i].x + obstacles[i].width &&
           player.x + player.width > obstacles[i].x &&
           player.y < obstacles[i].y + obstacles[i].height &&
           player.y + player.height > obstacles[i].y
         ) {
-          // Collision avec un obstacle
+          lives--;
+          createParticle(obstacles[i].x, obstacles[i].y, 'red');
+          
+          document.getElementById('remainingLives').innerText = lives;
           hitMessage.style.display = 'flex';
           setTimeout(() => {
             hitMessage.style.display = 'none';
-          }, 1000);
+          }, 1500);
           
-          // Pénalité
-          if (score > 0) score -= 1;
+          if (lives <= 0) {
+            gameRunning = false;
+            clearInterval(gravityTimer);
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('finalLevel').innerText = level;
+            document.getElementById('finalBonuses').innerText = totalBonuses;
+            endScreen.style.display = 'flex';
+            return;
+          }
           
-          // Supprimer l'obstacle
           obstacles.splice(i, 1);
           continue;
         }
         
-        // Supprimer les obstacles qui sortent de l'écran
-        if (obstacles[i].x + obstacles[i].width < 0) {
+        if (obstacles[i].x < -50) {
           obstacles.splice(i, 1);
         }
       }
 
-      // Vérifier le niveau actuel
-      level = Math.floor(score / 20) + 1;
+      // Mise à jour des bonus
+      for (let i = bonuses.length - 1; i >= 0; i--) {
+        bonuses[i].x -= effectiveSpeed;
+        
+        // Collision avec le joueur
+        if (
+          player.x < bonuses[i].x + bonuses[i].width &&
+          player.x + player.width > bonuses[i].x &&
+          player.y < bonuses[i].y + bonuses[i].height &&
+          player.y + player.height > bonuses[i].y
+        ) {
+          totalBonuses++;
+          createParticle(bonuses[i].x, bonuses[i].y, 'rainbow');
+          
+          switch (bonuses[i].type) {
+            case 'speed':
+              activeBonuses.speed = 600; // 10 secondes
+              break;
+            case 'magnet':
+              activeBonuses.magnet = 900; // 15 secondes
+              break;
+            case 'shield':
+              activeBonuses.shield = 480; // 8 secondes
+              break;
+            case 'life':
+              lives = Math.min(lives + 1, 5);
+              break;
+          }
+          
+          bonuses.splice(i, 1);
+          continue;
+        }
+        
+        if (bonuses[i].x < -50) {
+          bonuses.splice(i, 1);
+        }
+      }
+
+      // Mise à jour des particules
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].x += particles[i].vx;
+        particles[i].y += particles[i].vy;
+        particles[i].life--;
+        particles[i].vy += 0.1; // Gravité
+        
+        if (particles[i].life <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      // Mise à jour du niveau
+      level = Math.floor(score / 15) + 1;
       if (level > lastLevel) {
-        levelUpMessage = `Niveau ${level} ! + de vitesse !`;
+        levelUpMessage = `🎉 Niveau ${level} atteint ! 🚀`;
         setTimeout(() => {
           levelUpMessage = '';
-        }, 2000);
+        }, 2500);
         lastLevel = level;
       }
+
+      // Mettre à jour l'interface
+      updateUI();
     }
 
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Effacer le canvas avec un dégradé
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#87CEEB');
+      gradient.addColorStop(0.5, '#98FB98');
+      gradient.addColorStop(1, '#F0E68C');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Dessiner le joueur
+      // Dessiner tous les éléments
       drawPlayer();
-      
-      // Dessiner les pièces et billets
       drawCoins();
-      
-      // Dessiner les obstacles
       drawObstacles();
-      
-      // Afficher le score
-      drawScore();
-      
-      // Afficher le message de niveau si nécessaire
+      drawBonuses();
+      drawParticles();
       drawLevelUpMessage();
     }
+
+    // Initialiser les contrôles tactiles
+    document.getElementById('jumpBtn').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      sauter();
+    });
+
+    document.getElementById('jumpBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      sauter();
+    });
   </script>
 </body>
 </html>
