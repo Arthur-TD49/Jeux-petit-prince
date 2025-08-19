@@ -351,7 +351,11 @@
 
     // Création des éléments de jeu
     function createCoin() {
-      let y = Math.random() * (canvas.height - 300) + 100;
+      // Zone accessible : du sol jusqu'à la hauteur de saut maximum du joueur
+      let groundLevel = canvas.height - 100;
+      let maxJumpHeight = groundLevel - 120; // Hauteur maximum que le joueur peut atteindre
+      let y = Math.random() * (groundLevel - maxJumpHeight) + maxJumpHeight;
+      
       let type = Math.random() < 0.7 ? 'coin' : 'bill';
       let value = type === 'coin' ? 1 : 10;
       coins.push({ 
@@ -368,9 +372,11 @@
 
     function createObstacle() {
       let height = Math.random() * 60 + 30;
+      let groundLevel = canvas.height - 50; // Position du sol
+      
       obstacles.push({ 
         x: canvas.width + 50, 
-        y: canvas.height - height - 50, 
+        y: groundLevel - height, // Les obstacles partent du sol vers le haut
         width: 35, 
         height,
         type: 'spike'
@@ -380,7 +386,11 @@
     function createBonus() {
       const bonusTypes = ['speed', 'magnet', 'shield', 'life'];
       const type = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
-      let y = Math.random() * (canvas.height - 300) + 100;
+      
+      // Zone accessible : du sol jusqu'à la hauteur de saut maximum du joueur
+      let groundLevel = canvas.height - 100;
+      let maxJumpHeight = groundLevel - 120; // Hauteur maximum que le joueur peut atteindre
+      let y = Math.random() * (groundLevel - maxJumpHeight) + maxJumpHeight;
       
       bonuses.push({
         x: canvas.width + 50,
@@ -578,15 +588,19 @@
     }
 
     function initGame() {
+      // Position du joueur alignée avec le sol
+      let groundLevel = canvas.height - 100;
+      
       player = { 
         x: 100, 
-        y: canvas.height - 150, 
+        y: groundLevel, 
         width: 50, 
         height: 60, 
         dy: 0, 
         gravity: 0.8, 
         jumpForce: -15, 
-        grounded: false 
+        grounded: false,
+        groundLevel: groundLevel // Stocker la position du sol
       };
       keys = {};
       coins = [];
