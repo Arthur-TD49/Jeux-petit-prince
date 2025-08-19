@@ -476,6 +476,7 @@
     <input type="password" id="password" placeholder="Code secret">
     <button onclick="login()" class="button">🚀 Commencer l'Aventure</button>
     <button onclick="register()" class="button">✨ Créer un Royaume</button>
+    <button onclick="quickStart()" class="button">⚡ Démarrage Rapide</button>
     <p id="msg"></p>
   </div>
 
@@ -725,6 +726,14 @@
       msg.innerText = text;
       msg.style.color = type === 'error' ? '#e74c3c' : '#27ae60';
       msg.style.animation = 'bounce 0.5s ease';
+    }
+
+    function quickStart() {
+      // Démarrage rapide sans authentification
+      elements.loginZone.style.display = 'none';
+      elements.startScreen.style.display = 'flex';
+      elements.playerNameDisplay.innerText = 'Petit Prince';
+      createStarField();
     }
 
     function logout() {
@@ -1694,6 +1703,21 @@ Bonne chance, noble prince ! 🌟`);
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
+
+    // Rendre les fonctions accessibles globalement
+    window.login = login;
+    window.register = register;
+    window.quickStart = quickStart;
+    window.startGame = startGame;
+    window.showTutorial = showTutorial;
+    window.togglePause = togglePause;
+    window.resumeGame = resumeGame;
+    window.restartGame = restartGame;
+    window.goToMenu = goToMenu;
+    window.logout = logout;
+    window.jump = jump;
+    window.slide = slide;
+    window.usePower = usePower;
 
     // Initialisation
     createStarField();
